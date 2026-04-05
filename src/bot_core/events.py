@@ -1,3 +1,6 @@
+from bot_core.db import get_connection
+
+
 def insert_bot_entry(bot_code: str, telegram_user_id: int):
     conn = None
     try:
