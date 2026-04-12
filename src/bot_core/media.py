@@ -9,7 +9,7 @@ RETRY_DELAY = 2  # секунды
 
 
 async def send_media_with_retry(
-    message,
+    callback,
     user_id,
     file_path,
     mode,
