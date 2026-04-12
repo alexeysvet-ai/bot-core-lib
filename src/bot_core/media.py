@@ -5,6 +5,7 @@ from bot_core.utils import log
 from aiogram.exceptions import TelegramBadRequest, TelegramNetworkError
 
 MAX_SEND_RETRIES = 3
+REQUEST_TIMEOUT = 300
 RETRY_DELAY = 2  # секунды
 
 
@@ -31,12 +32,14 @@ async def send_media_with_retry(
                     media,
                     title=title,
                     performer=uploader or "",
-                    caption=caption
+                    caption=caption,
+                    request_timeout = REQUEST_TIMEOUT
                 )
             else:
                 await callback.message.answer_video(
                     media,
-                    caption=caption
+                    caption=caption,
+                    request_timeout = REQUEST_TIMEOUT
                 )
 
             log(f"[SEND SUCCESS] user={user_id} attempt={attempt}")
@@ -49,7 +52,7 @@ async def send_media_with_retry(
 
         except (TelegramNetworkError, asyncio.TimeoutError, ClientError, OSError) as e: 
             last_exception = e
-            log(f"[SEND ERROR] user={user_id} attempt={attempt} error={e}")
+            log(f"[SEND ERROR] user={user_id} attempt={attempt} type={type(e).__name__} error={e}")
 
             if attempt < MAX_SEND_RETRIES:
                 # Уведомляем пользователя после первой неудачной попытки
