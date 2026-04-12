@@ -1,8 +1,8 @@
-from aiogram.exceptions import TelegramBadRequest
 from aiohttp import ClientError
 import asyncio
 from aiogram import types
 from bot_core.utils import log
+from aiogram.exceptions import TelegramBadRequest, TelegramNetworkError
 
 MAX_SEND_RETRIES = 3
 RETRY_DELAY = 2  # секунды
@@ -47,7 +47,7 @@ async def send_media_with_retry(
             log(f"[SEND NON-RETRYABLE] user={user_id} error={e}")
             raise
 
-        except (asyncio.TimeoutError, ClientError, OSError) as e:
+        except (TelegramNetworkError, asyncio.TimeoutError, ClientError, OSError) as e: 
             last_exception = e
             log(f"[SEND ERROR] user={user_id} attempt={attempt} error={e}")
 
