@@ -2,7 +2,7 @@ from aiogram.exceptions import TelegramBadRequest
 from aiohttp import ClientError
 import asyncio
 from aiogram import types
-from utils import log
+from bot_core.utils import log
 
 MAX_SEND_RETRIES = 3
 RETRY_DELAY = 2  # секунды
