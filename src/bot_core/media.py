@@ -9,14 +9,14 @@ RETRY_DELAY = 2  # секунды
 
 
 async def send_media_with_retry(
-    callback,
+    message,
     user_id,
     file_path,
     mode,
     title,
     uploader,
     caption,
-    t
+    retry_text=None,
 ):
     """
     P0-safe отправка медиафайла в Telegram с 3 попытками.
@@ -58,7 +58,7 @@ async def send_media_with_retry(
             if attempt < MAX_SEND_RETRIES:
                 # Уведомляем пользователя после первой неудачной попытки
                 if attempt == 1:
-                    await callback.message.answer(t("send_retry", user_id))
+                    await callback.message.answer(retry_text, user_id))
                 await asyncio.sleep(RETRY_DELAY)
             else:
                 log(f"[SEND FAILED] user={user_id} after {MAX_SEND_RETRIES} attempts")
