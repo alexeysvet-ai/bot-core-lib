@@ -1,5 +1,6 @@
 from aiohttp import ClientError
 import asyncio
+import re
 from aiogram import types
 from bot_core.utils import log
 from aiogram.exceptions import TelegramBadRequest, TelegramNetworkError
@@ -7,6 +8,11 @@ from aiogram.exceptions import TelegramBadRequest, TelegramNetworkError
 MAX_SEND_RETRIES = 3
 REQUEST_TIMEOUT = 120
 RETRY_DELAY = 2  # секунды
+
+
+def sanitize_error_text(error) -> str:
+    text = str(error)
+    return re.sub(r"/bot[^/]+/", "/bot***/", text)
 
 
 async def send_media_with_retry(
@@ -47,16 +53,19 @@ async def send_media_with_retry(
 
         except TelegramBadRequest as e:
             # Неретраимые ошибки Telegram (например, файл слишком большой)
-            log(f"[SEND NON-RETRYABLE] user={user_id} error={e}")
+            log(f"[SEND NON-RETRYABLE] user={user_id} error={sanitize_error_text(e)}")
             raise
 
-        except (TelegramNetworkError, asyncio.TimeoutError, ClientError, OSError) as e: 
+        except (TelegramNetworkError, asyncio.TimeoutError, ClientError, OSError) as e:
             last_exception = e
-            log(f"[SEND ERROR] user={user_id} attempt={attempt} type={type(e).__name__} error={e}")
+            log(
+                f"[SEND ERROR] user={user_id} attempt={attempt} "
+                f"type={type(e).__name__} error={sanitize_error_text(e)}"
+            )
 
             if attempt < MAX_SEND_RETRIES:
                 # Уведомляем пользователя после первой неудачной попытки
-                if attempt == 1:
+                if attempt == 1 and retry_text:
                     await callback.message.answer(retry_text)
                 await asyncio.sleep(RETRY_DELAY)
             else:
