@@ -5,7 +5,7 @@ from bot_core.utils import log
 from aiogram.exceptions import TelegramBadRequest, TelegramNetworkError
 
 MAX_SEND_RETRIES = 3
-REQUEST_TIMEOUT = 300
+REQUEST_TIMEOUT = 120
 RETRY_DELAY = 2  # секунды
 
 
