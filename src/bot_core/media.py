@@ -24,11 +24,20 @@ async def send_media_with_retry(
     uploader,
     caption,
     retry_text=None,
+    request_timeout=None,
+    retry_delay=None,
+    on_attempt=None,
+    on_retry=None,
 ):
     last_exception = None
+    effective_request_timeout = request_timeout or REQUEST_TIMEOUT
+    effective_retry_delay = retry_delay if retry_delay is not None else RETRY_DELAY
 
     for attempt in range(1, MAX_SEND_RETRIES + 1):
         try:
+            if on_attempt:
+                await on_attempt(attempt, MAX_SEND_RETRIES)
+
             log(f"[SEND ATTEMPT {attempt}/{MAX_SEND_RETRIES}] user={user_id} path={file_path}")
 
             media = types.FSInputFile(file_path)
@@ -39,13 +48,13 @@ async def send_media_with_retry(
                     title=title,
                     performer=uploader or "",
                     caption=caption,
-                    request_timeout = REQUEST_TIMEOUT
+                    request_timeout=effective_request_timeout
                 )
             else:
                 await callback.message.answer_video(
                     media,
                     caption=caption,
-                    request_timeout = REQUEST_TIMEOUT
+                    request_timeout=effective_request_timeout
                 )
 
             log(f"[SEND SUCCESS] user={user_id} attempt={attempt}")
@@ -65,9 +74,11 @@ async def send_media_with_retry(
 
             if attempt < MAX_SEND_RETRIES:
                 # Уведомляем пользователя после первой неудачной попытки
-                if attempt == 1 and retry_text:
+                if on_retry:
+                    await on_retry(attempt, MAX_SEND_RETRIES, e)
+                elif attempt == 1 and retry_text:
                     await callback.message.answer(retry_text)
-                await asyncio.sleep(RETRY_DELAY)
+                await asyncio.sleep(effective_retry_delay)
             else:
                 log(f"[SEND FAILED] user={user_id} after {MAX_SEND_RETRIES} attempts")
                 #await callback.message.answer(t("send_retry_final_fail", user_id))
